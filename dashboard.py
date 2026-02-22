@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Simple page config
+# Page config
 st.set_page_config(page_title="Personal Finance Dashboard", page_icon="💰", layout="wide")
 
 # Load data
@@ -49,22 +49,36 @@ k5.metric("Avg Credit", f"{fdf['credit_score'].mean():.0f}")
 st.markdown("---")
 
 # Tabs
-tab1, tab2, tab3 = st.tabs(["Income & Expenses", "Savings Analysis", "Economic Scenarios"])
+tab1, tab2, tab3 = st.tabs(["📈 Income & Expenses", "💰 Savings Analysis", "🌐 Economic Scenarios"])
 
 with tab1:
     col1, col2 = st.columns(2)
     
     with col1:
         st.subheader("Yearly Trends")
-        yearly = fdf.groupby("year").agg({"monthly_income":"mean","monthly_expense_total":"mean","actual_savings":"mean"}).reset_index()
-        fig = px.line(yearly, x="year", y=["monthly_income","monthly_expense_total","actual_savings"], 
-                     markers=True, labels={"value":"Amount ($)", "variable":"Metric"})
+        yearly = fdf.groupby("year").agg({
+            "monthly_income":"mean",
+            "monthly_expense_total":"mean",
+            "actual_savings":"mean"
+        }).reset_index()
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=yearly["year"], y=yearly["monthly_income"], 
+                                mode='lines+markers', name='Income'))
+        fig.add_trace(go.Scatter(x=yearly["year"], y=yearly["monthly_expense_total"], 
+                                mode='lines+markers', name='Expenses'))
+        fig.add_trace(go.Scatter(x=yearly["year"], y=yearly["actual_savings"], 
+                                mode='lines+markers', name='Savings'))
+        fig.update_layout(height=400, xaxis_title="Year", yaxis_title="Amount ($)")
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
         st.subheader("Income by Type")
         inc = fdf.groupby("income_type")["monthly_income"].mean().reset_index()
-        fig2 = px.bar(inc, x="income_type", y="monthly_income", text_auto=".0f")
+        fig2 = px.bar(inc, x="income_type", y="monthly_income", 
+                     text=inc["monthly_income"].apply(lambda x: f"${x:,.0f}"))
+        fig2.update_traces(textposition="outside")
+        fig2.update_layout(height=400)
         st.plotly_chart(fig2, use_container_width=True)
     
     col3, col4 = st.columns(2)
@@ -73,12 +87,15 @@ with tab1:
         st.subheader("Spending by Category")
         cat = fdf.groupby("category")["monthly_expense_total"].mean().sort_values().reset_index()
         fig3 = px.bar(cat, x="monthly_expense_total", y="category", orientation="h")
+        fig3.update_layout(height=400)
         st.plotly_chart(fig3, use_container_width=True)
     
     with col4:
         st.subheader("Cash Flow Status")
         cf = fdf["cash_flow_status"].value_counts().reset_index()
-        fig4 = px.pie(cf, names="cash_flow_status", values="count", hole=0.4)
+        cf.columns = ["Status", "Count"]
+        fig4 = px.pie(cf, names="Status", values="Count", hole=0.4)
+        fig4.update_layout(height=400)
         st.plotly_chart(fig4, use_container_width=True)
 
 with tab2:
@@ -87,14 +104,19 @@ with tab2:
     with col1:
         st.subheader("Savings Rate Distribution")
         fig5 = px.histogram(fdf, x="savings_rate", nbins=30)
-        fig5.add_vline(x=fdf["savings_rate"].mean(), line_dash="dash", line_color="red")
+        fig5.add_vline(x=fdf["savings_rate"].mean(), line_dash="dash", 
+                      line_color="red", annotation_text=f"Mean: {fdf['savings_rate'].mean():.2f}")
+        fig5.update_layout(height=350)
         st.plotly_chart(fig5, use_container_width=True)
     
     with col2:
         st.subheader("Goal Achievement by Year")
         goal = fdf.groupby("year")["savings_goal_met"].mean().reset_index()
         goal["pct"] = goal["savings_goal_met"] * 100
-        fig6 = px.bar(goal, x="year", y="pct", text_auto=".1f")
+        fig6 = px.bar(goal, x="year", y="pct", 
+                     text=goal["pct"].apply(lambda x: f"{x:.1f}%"))
+        fig6.update_traces(textposition="outside")
+        fig6.update_layout(height=350)
         st.plotly_chart(fig6, use_container_width=True)
     
     col3, col4 = st.columns(2)
@@ -102,14 +124,19 @@ with tab2:
     with col3:
         st.subheader("Savings by Stress & Income")
         sav = fdf.groupby(["financial_stress_level","income_type"])["actual_savings"].mean().reset_index()
-        fig7 = px.bar(sav, x="financial_stress_level", y="actual_savings", color="income_type", barmode="group")
+        fig7 = px.bar(sav, x="financial_stress_level", y="actual_savings", 
+                     color="income_type", barmode="group",
+                     category_orders={"financial_stress_level": ["Low", "Medium", "High"]})
+        fig7.update_layout(height=350)
         st.plotly_chart(fig7, use_container_width=True)
     
     with col4:
         st.subheader("Emergency Fund vs Savings")
-        sample = fdf.sample(min(500, len(fdf)))
-        fig8 = px.scatter(sample, x="emergency_fund", y="actual_savings", color="cash_flow_status", 
-                         opacity=0.5, trendline="ols")
+        sample = fdf.sample(min(500, len(fdf)), random_state=42)
+        fig8 = px.scatter(sample, x="emergency_fund", y="actual_savings", 
+                         color="cash_flow_status", opacity=0.5,
+                         trendline="ols")
+        fig8.update_layout(height=350)
         st.plotly_chart(fig8, use_container_width=True)
 
 with tab3:
@@ -117,17 +144,28 @@ with tab3:
     
     with col1:
         st.subheader("Metrics by Scenario")
-        scen = fdf.groupby("financial_scenario").agg(
-            {"monthly_income":"mean","monthly_expense_total":"mean","actual_savings":"mean"}
-        ).reset_index()
-        fig9 = px.bar(scen, x="financial_scenario", y=["monthly_income","monthly_expense_total","actual_savings"], barmode="group")
+        scen = fdf.groupby("financial_scenario").agg({
+            "monthly_income":"mean",
+            "monthly_expense_total":"mean",
+            "actual_savings":"mean"
+        }).reset_index()
+        
+        fig9 = go.Figure()
+        fig9.add_trace(go.Bar(x=scen["financial_scenario"], y=scen["monthly_income"], name="Income"))
+        fig9.add_trace(go.Bar(x=scen["financial_scenario"], y=scen["monthly_expense_total"], name="Expenses"))
+        fig9.add_trace(go.Bar(x=scen["financial_scenario"], y=scen["actual_savings"], name="Savings"))
+        fig9.update_layout(barmode="group", height=370)
         st.plotly_chart(fig9, use_container_width=True)
     
     with col2:
         st.subheader("Stress by Scenario")
         stress = fdf.groupby(["financial_scenario","financial_stress_level"]).size().unstack(fill_value=0)
         stress_pct = stress.div(stress.sum(axis=1), axis=0) * 100
-        fig10 = px.bar(stress_pct, barmode="stack")
+        
+        fig10 = go.Figure()
+        for col in stress_pct.columns:
+            fig10.add_trace(go.Bar(x=stress_pct.index, y=stress_pct[col], name=col))
+        fig10.update_layout(barmode="stack", height=370)
         st.plotly_chart(fig10, use_container_width=True)
     
     col3, col4 = st.columns(2)
@@ -135,12 +173,15 @@ with tab3:
     with col3:
         st.subheader("Debt-to-Income by Scenario")
         fig11 = px.box(fdf, x="financial_scenario", y="debt_to_income_ratio")
+        fig11.update_layout(height=340)
         st.plotly_chart(fig11, use_container_width=True)
     
     with col4:
         st.subheader("Investment by Scenario")
         inv = fdf.groupby(["financial_scenario","income_type"])["investment_amount"].mean().reset_index()
-        fig12 = px.bar(inv, x="financial_scenario", y="investment_amount", color="income_type", barmode="group")
+        fig12 = px.bar(inv, x="financial_scenario", y="investment_amount", 
+                      color="income_type", barmode="group")
+        fig12.update_layout(height=340)
         st.plotly_chart(fig12, use_container_width=True)
 
 # Insights
@@ -156,13 +197,16 @@ with col1:
     """)
 
 with col2:
-    recession_sav = fdf[fdf["financial_scenario"]=="recession"]["actual_savings"].mean()
-    normal_sav = fdf[fdf["financial_scenario"]=="normal"]["actual_savings"].mean()
-    st.warning(f"""
-    **Economic Impact**  
-    Recession reduces savings by ${normal_sav - recession_sav:,.0f} compared to normal periods.
-    Stress levels increase significantly during downturns.
-    """)
+    if "recession" in fdf["financial_scenario"].values and "normal" in fdf["financial_scenario"].values:
+        recession_sav = fdf[fdf["financial_scenario"]=="recession"]["actual_savings"].mean()
+        normal_sav = fdf[fdf["financial_scenario"]=="normal"]["actual_savings"].mean()
+        st.warning(f"""
+        **Economic Impact**  
+        Recession reduces savings by ${normal_sav - recession_sav:,.0f} compared to normal periods.
+        Stress levels increase significantly during downturns.
+        """)
+    else:
+        st.warning("**Economic Impact** - Select multiple scenarios to compare")
 
 with col3:
     st.success(f"""
@@ -175,6 +219,7 @@ with col3:
 # Data table
 with st.expander("📊 View Raw Data"):
     st.dataframe(fdf.head(100), use_container_width=True)
-    st.download_button("Download CSV", fdf.to_csv(index=False), "data.csv", "text/csv")
+    csv = fdf.to_csv(index=False).encode('utf-8')
+    st.download_button("Download CSV", csv, "filtered_data.csv", "text/csv")
 
-st.caption(f"Dashboard by [Your Name] | Tarmeez Capital Assessment | {len(fdf):,} records displayed")
+st.caption(f"Personal Finance Dashboard | Tarmeez Capital Assessment | Showing {len(fdf):,} records")
