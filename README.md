@@ -159,7 +159,7 @@ The financial advice score, which averages around 52 out of 100, provides additi
 
 The fully interactive dashboard is deployed on Streamlit Community Cloud and accessible at the following URL:
 
-**🔗 [https://personal-finance-behavioral-analysis.streamlit.app](https://personal-finance-behavioral-analysis.streamlit.app)**
+*[*🔗 [https://personal-finance-behavioral-analysis.streamlit.app](https://personal-finance-behavioral-analysis.streamlit.app)](https://personal-finance-dashboard-hl7zzdyezjbfzdddjlac9d.streamlit.app/)**
 
 *(Note: Replace with your actual Streamlit Cloud URL after deployment)*
 
@@ -211,29 +211,13 @@ tarmeez-finance-dashboard/
 
 All files are required for deployment. The dashboard.py file is the entry point that Streamlit Cloud will execute. The CSV file must be in the same directory as the Python script. The requirements.txt file specifies all Python packages needed (streamlit, pandas, plotly, numpy) and is read automatically by Streamlit Cloud during deployment.
 
----
-
-## Submission Checklist
-
-Before submitting this project, the following items have been completed:
-
-✅ **README.md** — Written as a cohesive essay (not a checklist) covering all required sections  
-✅ **Dataset file(s)** — Raw data uploaded to repository (CSV format)  
-✅ **Dashboard code** — Complete Streamlit application script uploaded  
-✅ **Requirements.txt** — Python dependencies specified for deployment  
-✅ **Live Dashboard Link** — Dashboard deployed to Streamlit Community Cloud with public URL  
-✅ **GitHub Repository** — Public repository containing all files  
-✅ **Dashboard Screenshots** — Visual previews embedded in README (if applicable)  
-✅ **Key Insights** — 7 substantive findings documented with stakeholder recommendations  
-✅ **Assumptions & Limitations** — Explicit documentation of analytical constraints  
-✅ **Data Source Documentation** — Clear explanation of where data came from and why it was chosen  
 
 ---
 
-**Submitted by:** [Your Name]  
-**Date:** February 19, 2026  
+**Submitted by:** Rahaf Alshahrani 
+**Date:** February 22, 2026  
 **Deadline:** 23 / 02 / 2026  
-**Contact:** [Your Email]  
+**Contact:** Rmalshahrani00@gmail.com
 
 ---
 
